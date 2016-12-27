@@ -34,6 +34,7 @@ var GameState = {
 	preload : function() {
 		/* background */
 		this.load.image('background', 'assets/images/background-game.png');
+		/* sound */
 		this.load.audio('theme', ['assets/audio/MoozE_Predator.mp3']);
 		/* player */
 		this.load.image('player', 'assets/images/su37.png');
@@ -57,22 +58,31 @@ var GameState = {
 		this.player.body.gravity.y = 1000;
 		this.player.body.collideWorldBounds = true;
 		this.player.body.allowGravity = true;
+		this.player.body.maxVelocity.setTo(400, 400);
+		this.player.body.drag.setTo(400, 400);
 		/* enemy */
+		//this.enemy = this.add.group();
 		this.enemy = this.game.add.sprite(this.world.centerX, 50, 'enemy');
 		this.enemy.anchor.setTo(0.5, 0.5);
 		this.enemy.scale.setTo(0.25);
 		this.game.physics.arcade.enable(this.enemy);
-		this.enemy.body.allowGravity = false;
+		this.enemy.body.allowGravity = true;
+		this.enemy.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
 		/* missile */
-	    this.missile = game.add.weapon(1, 'missile');
+	    this.missile = game.add.weapon(30, 'missile');
 	    this.missile.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
 	    this.missile.bulletAngleOffset = 90;
 	    this.missile.bulletSpeed = 500;
 	    this.missile.fireRate = 60;
 	    this.missile.bulletSpeedVariance = 200;
-	    this.missile.trackSprite(this.player, 0, 0);
+	    this.missile.trackSprite(this.player, 0, -75);
 		/* ui */
-		var text = game.add.text(32, 32, 'Score: 0', {
+		var txtLives = game.add.text(500, 32, 'Lives: 3', {
+			font : "18px Dosis",
+			fill : "#db5941",
+			align : "center"
+		});
+		var txtScore = game.add.text(32, 32, 'Score: 0', {
 			font : "18px Dosis",
 			fill : "#9fbf00",
 			align : "center"
@@ -89,11 +99,17 @@ var GameState = {
 		/* animating background */
 		this.background.tilePosition.y += 2;
 		//this.background.tilePosition.x -= 0.5;
+		//this.player.body.acceleration.x = 0;
+		this.player.body.velocity.setTo(0, 0);
 		/* player controls */
 		if (game.input.keyboard.isDown(Phaser.Keyboard.LEFT)) {
 			this.player.x -= this.RUNNIGN_SPEED;
+			this.player.body.velocity.x = 75;
+			this.player.body.acceleration.x = 600;
 		} else if (game.input.keyboard.isDown(Phaser.Keyboard.RIGHT)) {
 			this.player.x += this.RUNNIGN_SPEED;
+			this.player.body.velocity.x = -75;
+			this.player.body.acceleration.x = -600;
 		}
 		/*if ( game.input.keyboard.isDown( Phaser.Keyboard.UP ) ) { //&& this.player.body.touching.down
 		 this.player.y -= 4;
@@ -104,6 +120,12 @@ var GameState = {
 			//this.player.body.velocity.y = -this.JUMPING_SPEED;
 			this.missile.fire();
 		}
+		// Squish and rotate ship for illusion of "banking"
+		bank = this.player.body.velocity.x / 400;
+		this.player.scale.x = 0.25 - Math.abs(bank) / 2;
+		this.player.angle = bank * 30;
+		
+		//this.enemy.reset(game.rnd.integerInRange(0, game.width), -20);
 	},
 	render : function render() {
 		//game.debug.spriteInfo(this.player, 32, 100);
